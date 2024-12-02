@@ -1,6 +1,6 @@
 require('dotenv').config()
 const { Router, json } = require("express");
-const { userModel, purchaseModel } = require("../db");
+const { userModel, purchaseModel, courseModel } = require("../db");
 const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
 // const { JWT_USER_SECRET } = require("../config");
@@ -18,7 +18,8 @@ userRouter.post("/signup", async (req, res) => {
 
   const hashedPassword = await bcrypt.hash(password, 5);
 
-  await userModel.create({
+  try {
+    await userModel.create({
     email: email,
     password: hashedPassword,
     firstName: firstName,
@@ -28,6 +29,12 @@ userRouter.post("/signup", async (req, res) => {
   res.json({
     message: "account created suxcessfullie",
   });
+  } catch(e) {
+    res.json({
+      message: e.errorResponse.errmsg
+    })
+  }
+  
 });
 
 userRouter.post("/signin", async (req, res) => {
@@ -38,7 +45,7 @@ userRouter.post("/signin", async (req, res) => {
     email,
   });
 
-  const passwordMatch = bcrypt.compare(password, user.password);
+  const passwordMatch = await bcrypt.compare(password, user.password);
 
   if (passwordMatch) {
     const token = jwt.sign(
@@ -63,8 +70,13 @@ userRouter.get("/purchases", userMiddleware, async (req, res) => {
     userId
   })
 
+  const coursesData = await courseModel.find({
+    _id: { $in: purchases.map(x => x.courseId) }
+  })
+
   res.json({
-    purchases
+    purchases,
+    coursesData
   })
 });
 

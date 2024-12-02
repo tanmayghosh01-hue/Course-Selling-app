@@ -1,7 +1,10 @@
-const { Router } = require("express");
+const { Router, json } = require("express");
 const { userMiddleware } = require("../middlewares/user");
 const { purchaseModel } = require("../db");
+const { courseModel } = require("../db")
 const courseRouter = Router();
+
+courseRouter.use(json());
 
 courseRouter.post("/purchase", userMiddleware, async (req, res) => {
   const userId = req.userId;
